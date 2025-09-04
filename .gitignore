@@ -1,0 +1,51 @@
+# Only include code and data folders
+/dev-docs/
+/.taskmaster/
+/.claude/
+/.cursor/
+/.mcp.json
+/.env.example
+/add_mcp.sh
+/remove_mcp.sh
+
+# Ignore generated batch files (created on WRDS)
+data/batches/
+
+# Ignore large/generated data files
+data/extracted/
+data/combined/
+data/unmatched/
+data/*.pkl
+data/*.parquet
+data/extracted_*.csv
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Logs (generated on server)
+*.log
+logs/
+
+# Local folders that shouldn't exist
+results/
+batch_params/
+
+# Environment
+.env
+venv/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
