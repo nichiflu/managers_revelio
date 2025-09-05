@@ -14,19 +14,18 @@ import pandas as pd
 import numpy as np
 from pathlib import Path
 
-# Add project root to path
-project_root = Path(__file__).parent.parent.parent
-sys.path.append(str(project_root))
+# Add parent directory to path to import config
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from code.01_setup.config import DATA_DIR, BATCH_DIR
+from config import DATA_DIR, BATCH_DIR
 
 # Constants
 NUM_BATCHES = 5  # WRDS allows maximum 5 concurrent jobs per user
-INPUT_FILE = DATA_DIR / 'ceo_names_companies.csv'
+INPUT_FILE = Path(DATA_DIR) / 'ceo_names_companies.csv'
 
 def create_batch_directory():
     """Create batch directory if it doesn't exist."""
-    BATCH_DIR.mkdir(parents=True, exist_ok=True)
+    Path(BATCH_DIR).mkdir(parents=True, exist_ok=True)
     print(f"Batch directory created/verified: {BATCH_DIR}")
 
 def load_ceo_data():
@@ -94,7 +93,7 @@ def save_batches(batches):
     
     for i, batch_df in enumerate(batches, 1):
         filename = f"batch_{i:02d}_ceos.csv"
-        filepath = BATCH_DIR / filename
+        filepath = Path(BATCH_DIR) / filename
         
         batch_df.to_csv(filepath, index=False)
         saved_files.append(filepath)
@@ -111,7 +110,7 @@ def create_batch_summary(batches, saved_files):
         batches: List of batch DataFrames
         saved_files: List of saved file paths
     """
-    summary_file = BATCH_DIR / 'batch_summary.txt'
+    summary_file = Path(BATCH_DIR) / 'batch_summary.txt'
     
     with open(summary_file, 'w') as f:
         f.write("CEO Batch Split Summary\n")
@@ -127,8 +126,9 @@ def create_batch_summary(batches, saved_files):
             f.write(f"\nBatch {i:02d}:\n")
             f.write(f"  File: {filepath.name}\n")
             f.write(f"  CEOs: {len(batch_df)}\n")
-            f.write(f"  First CEO: {batch_df.iloc[0]['surname']}, {batch_df.iloc[0]['first_name']}\n")
-            f.write(f"  Last CEO: {batch_df.iloc[-1]['surname']}, {batch_df.iloc[-1]['first_name']}\n")
+            if len(batch_df) > 0:
+                f.write(f"  First CEO: {batch_df.iloc[0]['surname']}, {batch_df.iloc[0]['firstname']}\n")
+                f.write(f"  Last CEO: {batch_df.iloc[-1]['surname']}, {batch_df.iloc[-1]['firstname']}\n")
     
     print(f"\nBatch summary saved to: {summary_file}")
 
@@ -201,6 +201,8 @@ def main():
         
     except Exception as e:
         print(f"\nError: {e}")
+        import traceback
+        traceback.print_exc()
         sys.exit(1)
 
 if __name__ == "__main__":
