@@ -63,24 +63,32 @@ def test_wrds_connection():
     """Test WRDS database connection"""
     print("\n🔌 Testing WRDS connection:")
     
+    hostname = socket.gethostname()
+    
     try:
         import wrds
         print("✅ WRDS module imported successfully")
         
-        # Try to establish connection
-        try:
-            db = wrds.Connection(wrds_username=WRDS_USERNAME)
-            print(f"✅ Connected to WRDS as user: {WRDS_USERNAME}")
-            
-            # Test query to Revelio database
-            test_query = "SELECT COUNT(*) as count FROM revelio.individual_user LIMIT 1"
-            result = db.raw_sql(test_query)
-            
-            if result is not None:
-                print(f"✅ Successfully queried Revelio database")
-                print(f"   Individual_user table accessible")
-            
-            db.close()
+        # Check if we're on login node
+        if 'login' in hostname:
+            print("⚠️  On login node - skipping database queries")
+            print("   Database queries should only run in batch jobs")
+            print("   Connection will be tested when jobs are submitted")
+        else:
+            # Only connect if not on login node (e.g., in a batch job)
+            try:
+                db = wrds.Connection(wrds_username=WRDS_USERNAME)
+                print(f"✅ Connected to WRDS as user: {WRDS_USERNAME}")
+                
+                # Test query to Revelio database
+                test_query = "SELECT COUNT(*) as count FROM revelio.individual_user LIMIT 1"
+                result = db.raw_sql(test_query)
+                
+                if result is not None:
+                    print(f"✅ Successfully queried Revelio database")
+                    print(f"   Individual_user table accessible")
+                
+                db.close()
             
         except Exception as e:
             print(f"❌ Connection failed: {e}")
