@@ -43,7 +43,7 @@ def test_directories():
     # Create scratch subdirectories
     directories_to_create = [
         SCRATCH_DIR,
-        CEO_DATA_DIR,
+        DATA_DIR,
         BATCH_DIR,
         EXTRACTED_DIR,
         COMBINED_DIR,
