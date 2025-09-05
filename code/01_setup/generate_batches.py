@@ -29,11 +29,26 @@ def create_batch_directory():
     print(f"Batch directory created/verified: {BATCH_DIR}")
 
 def load_ceo_data():
-    """Load CEO data from CSV file."""
+    """Load CEO data from CSV file, trying different encodings."""
     if not INPUT_FILE.exists():
         raise FileNotFoundError(f"Input file not found: {INPUT_FILE}")
     
-    df = pd.read_csv(INPUT_FILE)
+    # Try different encodings
+    encodings = ['utf-8', 'latin-1', 'iso-8859-1', 'cp1252']
+    df = None
+    
+    for encoding in encodings:
+        try:
+            df = pd.read_csv(INPUT_FILE, encoding=encoding)
+            print(f"Successfully loaded CSV with {encoding} encoding")
+            break
+        except UnicodeDecodeError:
+            print(f"Failed to read with {encoding} encoding, trying next...")
+            continue
+    
+    if df is None:
+        raise ValueError("Could not read CSV file with any standard encoding")
+    
     print(f"Loaded {len(df)} CEOs from {INPUT_FILE}")
     
     # Display first few records for verification
@@ -95,7 +110,8 @@ def save_batches(batches):
         filename = f"batch_{i:02d}_ceos.csv"
         filepath = Path(BATCH_DIR) / filename
         
-        batch_df.to_csv(filepath, index=False)
+        # Save with utf-8 encoding to avoid issues later
+        batch_df.to_csv(filepath, index=False, encoding='utf-8')
         saved_files.append(filepath)
         
         print(f"Saved batch {i}: {filepath} ({len(batch_df)} CEOs)")
@@ -112,7 +128,7 @@ def create_batch_summary(batches, saved_files):
     """
     summary_file = Path(BATCH_DIR) / 'batch_summary.txt'
     
-    with open(summary_file, 'w') as f:
+    with open(summary_file, 'w', encoding='utf-8') as f:
         f.write("CEO Batch Split Summary\n")
         f.write("=" * 50 + "\n\n")
         f.write(f"Total CEOs: {sum(len(b) for b in batches)}\n")
@@ -127,8 +143,15 @@ def create_batch_summary(batches, saved_files):
             f.write(f"  File: {filepath.name}\n")
             f.write(f"  CEOs: {len(batch_df)}\n")
             if len(batch_df) > 0:
-                f.write(f"  First CEO: {batch_df.iloc[0]['surname']}, {batch_df.iloc[0]['firstname']}\n")
-                f.write(f"  Last CEO: {batch_df.iloc[-1]['surname']}, {batch_df.iloc[-1]['firstname']}\n")
+                # Handle potential encoding issues in names
+                try:
+                    first_ceo = f"{batch_df.iloc[0]['surname']}, {batch_df.iloc[0]['firstname']}"
+                    last_ceo = f"{batch_df.iloc[-1]['surname']}, {batch_df.iloc[-1]['firstname']}"
+                except:
+                    first_ceo = "Name encoding issue"
+                    last_ceo = "Name encoding issue"
+                f.write(f"  First CEO: {first_ceo}\n")
+                f.write(f"  Last CEO: {last_ceo}\n")
     
     print(f"\nBatch summary saved to: {summary_file}")
 
@@ -145,7 +168,7 @@ def verify_batches(original_df, saved_files):
     # Reload all batches
     all_batch_ceos = []
     for filepath in saved_files:
-        batch_df = pd.read_csv(filepath)
+        batch_df = pd.read_csv(filepath, encoding='utf-8')
         all_batch_ceos.append(batch_df)
     
     combined_df = pd.concat(all_batch_ceos, ignore_index=True)
